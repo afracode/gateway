@@ -1,0 +1,30 @@
+{
+    "name": "afracode/gateway",
+    "type": "library",
+    "description": "payment gateways for laravel",
+    "keywords": [
+        "afracode",
+        "laravel",
+        "payment",
+        "gateway",
+        "pay",
+        "pasargad"
+    ],
+    "homepage": "https://github.com/afracode/gateway",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ali Sharifi Neyestani",
+            "email": "ali@afracode.com"
+        },
+        {
+            "name": "Kourosh Sharifi Neyestani",
+            "email": "kourosh@afracode.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Afracode\\Gateway\\": "src"
+        }
+    }
+}
