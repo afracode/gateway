@@ -95,7 +95,76 @@ class Pasargad
     }
 
 
+    public function callback(Request $request)
+    {
+        $iD = $request->get('iD');
+        $tref = $request->get('tref');
+        $this->InvoiceNumber = $request->get('iN');
 
+
+        $this->transactionId = $request->get('transactionId');
+        $result = $this->getPaymentResult($tref);
+
+
+        if ($result) {
+            $verify = $this->verifyPaymentResult($this->InvoiceNumber, $iD);
+            if ($verify['actionResult']['result'] == "True") {
+                $this->transactionSucceed($result['resultObj']);
+                echo "پرداخت شما با موفقیت انجام شد, کد پیگیری : {$tref}";
+            } else {
+                echo "خطا : " . $verify['actionResult']['resultMessage'];
+            }
+        } else {
+            echo "پرداخت ناموفق بود.";
+        }
+
+
+    }
+
+
+    public function getPaymentResult($tref = null)
+    {
+
+        $fields = ['invoiceUID' => $tref];
+
+        $result = Parser::post2https($fields, 'https://pep.shaparak.ir/CheckTransactionResult.aspx');
+
+
+        $array = Parser::makeXMLTree($result);
+
+
+        if (isset($array["resultObj"]) && $array["resultObj"]["result"] == "True")
+            return $array;
+
+        $this->transactionFailed($array["resultObj"]);
+        return false;
+
+    }
+
+
+    public function verifyPaymentResult($InvoiceNumber, $iD)
+    {
+        $fields = [
+            'MerchantCode' => $this->merchantCode,
+            'TerminalCode' => $this->terminalCode,
+            'InvoiceNumber' => $InvoiceNumber,
+            'InvoiceDate' => $iD,
+            'amount' => $this->price * 10,
+            'TimeStamp' => date("Y/m/d H:i:s"),
+            'sign' => ''
+        ];
+
+        $processor = new RSAProcessor(public_path('certificate.xml'), RSAKeyType::XMLFile);
+        $data = "#" . $fields['MerchantCode'] . "#" . $fields['TerminalCode'] . "#" . $fields['InvoiceNumber'] . "#" . $fields['InvoiceDate'] . "#" . $fields['amount'] . "#" . $fields['TimeStamp'] . "#";
+        $data = sha1($data, true);
+        $data = $processor->sign($data);
+        $fields['sign'] = base64_encode($data);
+
+        $verifyresult = Parser::post2https($fields, 'https://pep.shaparak.ir/VerifyPayment.aspx');
+        $array = Parser::makeXMLTree($verifyresult);
+
+        return $array;
+    }
 
 
 }
